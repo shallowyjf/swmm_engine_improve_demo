@@ -1,0 +1,5 @@
+numpy>=1.21
+# Optional: for GeoTIFF export
+# rasterio>=1.3
+# Optional: for faster array operations
+# scipy>=1.10

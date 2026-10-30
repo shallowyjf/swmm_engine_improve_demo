@@ -1,0 +1,264 @@
+[TITLE]
+SWMM 2D Flood Demo - Valley Cascading Prototype
+;; Demonstrates hillslope runoff cascading (subcatchment runon),
+;; infiltration variability across land uses, node-subcatchment
+;; coupling, and surface ponding during pipe surcharge.
+;;
+;; Topology: West ridge (52m) -> valley (38m) <- East ridge (50m)
+;; 5 cascade chains, each 3 levels, converging to a trunk drain
+
+[OPTIONS]
+FLOW_UNITS CMS
+INFILTRATION HORTON
+FLOW_ROUTING DYNWAVE
+LINK_OFFSETS DEPTH
+ALLOW_PONDING YES
+SKIP_STEADY_STATE NO
+START_DATE 04/28/2026
+START_TIME 00:00:00
+REPORT_START_DATE 04/28/2026
+REPORT_START_TIME 00:00:00
+END_DATE 04/28/2026
+END_TIME 06:00:00
+REPORT_STEP 00:05:00
+WET_STEP 00:01:00
+DRY_STEP 00:05:00
+ROUTING_STEP 00:00:30
+INERTIAL_DAMPING PARTIAL
+NORMAL_FLOW_LIMITED BOTH
+FORCE_MAIN_EQUATION H-W
+VARIABLE_STEP 0.75
+LENGTHENING_STEP 0
+MIN_SURFAREA 1.0
+MAX_TRIALS 8
+HEAD_TOLERANCE 0.0015
+SYS_FLOW_TOL 5
+LAT_FLOW_TOL 5
+MINIMUM_STEP 0.5
+THREADS 1
+
+[RAINGAGES]
+;;Name          Format    Interval SCF  Source
+RG1             INTENSITY 0:05     1.0  TIMESERIES TS_CHI
+
+[TIMESERIES]
+;;Name    Date       Time   Value(mm/hr)
+;; Chicago design storm: 5yr return, 2hr duration, peak ratio r=0.4
+TS_CHI   04/28/2026 00:00  8.5
+TS_CHI   04/28/2026 00:05  9.3
+TS_CHI   04/28/2026 00:10  10.3
+TS_CHI   04/28/2026 00:15  11.6
+TS_CHI   04/28/2026 00:20  13.3
+TS_CHI   04/28/2026 00:25  15.8
+TS_CHI   04/28/2026 00:30  19.4
+TS_CHI   04/28/2026 00:35  25.6
+TS_CHI   04/28/2026 00:40  38.1
+TS_CHI   04/28/2026 00:45  74.7
+TS_CHI   04/28/2026 00:50  107.9
+TS_CHI   04/28/2026 00:55  56.7
+TS_CHI   04/28/2026 01:00  38.1
+TS_CHI   04/28/2026 01:05  28.7
+TS_CHI   04/28/2026 01:10  23.1
+TS_CHI   04/28/2026 01:15  19.4
+TS_CHI   04/28/2026 01:20  16.8
+TS_CHI   04/28/2026 01:25  14.9
+TS_CHI   04/28/2026 01:30  13.3
+TS_CHI   04/28/2026 01:35  12.1
+TS_CHI   04/28/2026 01:40  11.2
+TS_CHI   04/28/2026 01:45  10.3
+TS_CHI   04/28/2026 01:50  9.6
+TS_CHI   04/28/2026 01:55  9.0
+TS_CHI   04/28/2026 02:00  8.5
+TS_CHI   04/28/2026 03:00  0.0
+TS_CHI   04/28/2026 04:00  0.0
+TS_CHI   04/28/2026 05:00  0.0
+TS_CHI   04/28/2026 06:00  0.0
+
+[SUBCATCHMENTS]
+;;Name       RainGage  Outlet    Area   %Imperv  Width  %Slope  CurbLen  SnowPack
+;; === WEST CHAIN A (north) - BUILDING -> MIXED -> ROAD ===
+S_WA1        RG1       S_WA2     0.48   85       65     12      0
+S_WA2        RG1       S_WA3     0.38   40       58     7       0
+S_WA3        RG1       J_W       0.32   95       52     3       0
+;; === WEST CHAIN B (middle) - BUILDING -> GREEN -> ROAD ===
+S_WB1        RG1       S_WB2     0.45   80       62     14      0
+S_WB2        RG1       S_WB3     0.35   15       55     8       0
+S_WB3        RG1       J_W       0.30   90       50     4       0
+;; === WEST CHAIN C (south) - BUILDING -> GREEN -> ROAD ===
+S_WC1        RG1       S_WC2     0.50   85       68     15      0
+S_WC2        RG1       S_WC3     0.40   20       58     9       0
+S_WC3        RG1       J_W       0.35   90       52     4       0
+;; === EAST CHAIN D (north) - BUILDING -> MIXED -> ROAD ===
+S_ED1        RG1       S_ED2     0.45   80       60     13      0
+S_ED2        RG1       S_ED3     0.36   35       55     7       0
+S_ED3        RG1       J_E       0.30   95       48     3       0
+;; === EAST CHAIN E (south) - BUILDING -> GREEN -> MIXED ===
+S_EE1        RG1       S_EE2     0.46   85       63     11      0
+S_EE2        RG1       S_EE3     0.38   20       55     6       0
+S_EE3        RG1       J_E       0.32   60       50     2       0
+
+[SUBAREAS]
+;;Subcatchment  N-Imperv  N-Perv  S-Imperv  S-Perv  PctZero  RouteTo  PctRouted
+;; West Chain A
+S_WA1          0.013     0.25    1.5       5.0     25       OUTLET   100
+S_WA2          0.015     0.28    1.8       5.5     20       OUTLET   100
+S_WA3          0.013     0.20    1.2       4.0     40       OUTLET   100
+;; West Chain B
+S_WB1          0.013     0.25    1.5       5.0     25       OUTLET   100
+S_WB2          0.018     0.30    2.0       6.0     10       OUTLET   100
+S_WB3          0.013     0.20    1.2       4.0     40       OUTLET   100
+;; West Chain C
+S_WC1          0.013     0.25    1.5       5.0     25       OUTLET   100
+S_WC2          0.018     0.30    2.0       6.0     10       OUTLET   100
+S_WC3          0.013     0.20    1.2       4.0     40       OUTLET   100
+;; East Chain D
+S_ED1          0.013     0.25    1.5       5.0     25       OUTLET   100
+S_ED2          0.015     0.28    1.8       5.5     20       OUTLET   100
+S_ED3          0.013     0.20    1.2       4.0     40       OUTLET   100
+;; East Chain E
+S_EE1          0.013     0.25    1.5       5.0     25       OUTLET   100
+S_EE2          0.018     0.30    2.0       6.0     10       OUTLET   100
+S_EE3          0.015     0.27    1.6       5.0     20       OUTLET   100
+
+[INFILTRATION]
+;;Subcatchment  MaxRate  MinRate  Decay  DryTime  MaxInfil
+;; (Horton: mm/hr, mm/hr, 1/hr, days, mm)
+;; Building zones - compacted soil
+S_WA1          50       3        4      5        0
+S_WB1          50       3        4      5        0
+S_WC1          50       3        4      5        0
+S_ED1          50       3        4      5        0
+S_EE1          50       3        4      5        0
+;; Green zones - high infiltration, slow decay
+S_WB2          120      15       2      3        0
+S_WC2          120      15       2      3        0
+S_EE2          120      15       2      3        0
+;; Mixed zones - moderate infiltration
+S_WA2          70       6        3      4        0
+S_ED2          70       6        3      4        0
+S_EE3          70       6        3      4        0
+;; Road/paved zones - low infiltration
+S_WA3          8        1        7      5        0
+S_WB3          8        1        7      5        0
+S_WC3          8        1        7      5        0
+S_ED3          8        1        7      5        0
+
+[JUNCTIONS]
+;;Name    Elev   MaxDepth  InitDepth  SurDepth  Aponded
+J_W       42.0   2.8       0          0.3       80
+J_E       42.5   2.8       0          0.3       80
+J_MID     40.0   3.2       0          0.5       100
+J_DOWN    38.5   3.2       0          0.5       120
+J_OUT     37.0   3.5       0          0.5       150
+
+[OUTFALLS]
+;;Name    Elev   Type  StageData  Gated
+OUTFALL   36.0   FREE             NO
+
+[CONDUITS]
+;;Name    FromNode  ToNode  Length  Roughness  InOffset  OutOffset  InitFlow  MaxFlow
+C_W       J_W       J_MID   105     0.013      0         0          0         0
+C_E       J_E       J_MID   100     0.013      0         0          0         0
+C_MID     J_MID     J_DOWN  120     0.013      0         0          0         0
+C_DOWN    J_DOWN    J_OUT   100     0.013      0         0          0         0
+C_OUT     J_OUT     OUTFALL 80      0.013      0         0          0         0
+
+[XSECTIONS]
+;;Link   Shape     Geom1  Geom2  Geom3  Geom4  Barrels  Culvert
+C_W      CIRCULAR  0.35   0      0      0      1
+C_E      CIRCULAR  0.35   0      0      0      1
+C_MID    CIRCULAR  0.65   0      0      0      1
+C_DOWN   CIRCULAR  0.65   0      0      0      1
+C_OUT    CIRCULAR  0.80   0      0      0      1
+
+[LOSSES]
+;;Link   Inlet  Outlet  Average  FlapGate  Seepage
+C_W      0.5    0.5     0        NO        0
+C_E      0.5    0.5     0        NO        0
+C_MID    0.3    0.3     0        NO        0
+C_DOWN   0.3    0.3     0        NO        0
+C_OUT    0.3    0.3     0        NO        0
+
+[COORDINATES]
+;;Node     X-Coord  Y-Coord
+J_W        150      190
+J_E        330      190
+J_MID      240      110
+J_DOWN     240      35
+J_OUT      240      -35
+OUTFALL    240      -85
+
+[POLYGONS]
+;;Subcatchment  X-Coord  Y-Coord
+;; West Chain A (north ridge -> valley)
+S_WA1          -20      325
+S_WA1          70       330
+S_WA1          80       250
+S_WA1          -10      240
+S_WA2          70       320
+S_WA2          140      325
+S_WA2          150      245
+S_WA2          80       250
+S_WA3          120      310
+S_WA3          190      315
+S_WA3          200      235
+S_WA3          130      240
+;; West Chain B (middle ridge -> valley)
+S_WB1          -20      230
+S_WB1          70       235
+S_WB1          80       155
+S_WB1          -10      145
+S_WB2          65       225
+S_WB2          140      230
+S_WB2          150      150
+S_WB2          75       155
+S_WB3          115      215
+S_WB3          190      220
+S_WB3          200      140
+S_WB3          125      145
+;; West Chain C (south ridge -> valley)
+S_WC1          -20      135
+S_WC1          70       140
+S_WC1          80       60
+S_WC1          -10      50
+S_WC2          65       130
+S_WC2          140      135
+S_WC2          150      55
+S_WC2          75       60
+S_WC3          115      120
+S_WC3          190      125
+S_WC3          200      45
+S_WC3          125      50
+;; East Chain D (north ridge -> valley)
+S_ED1          430      310
+S_ED1          510      315
+S_ED1          500      235
+S_ED1          420      240
+S_ED2          350      305
+S_ED2          430      310
+S_ED2          420      230
+S_ED2          340      235
+S_ED3          300      295
+S_ED3          360      300
+S_ED3          350      220
+S_ED3          290      225
+;; East Chain E (south ridge -> valley)
+S_EE1          430      220
+S_EE1          510      225
+S_EE1          500      145
+S_EE1          420      150
+S_EE2          350      210
+S_EE2          430      215
+S_EE2          420      135
+S_EE2          340      140
+S_EE3          300      195
+S_EE3          360      200
+S_EE3          350      120
+S_EE3          290      125
+
+[REPORT]
+INPUT NO
+CONTROLS NO
+SUBCATCHMENTS ALL
+NODES ALL
+LINKS ALL
